@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import { searchSongs, fetchLyrics } from '@/lib/clientStorage';
 
 interface SongSearchProps {
   onAnalyze: (data: { title: string; artist: string; lyrics: string; year?: number }) => void;
@@ -46,11 +46,11 @@ export default function SongSearch({ onAnalyze, loading }: SongSearchProps) {
 
   // Search for songs
   useEffect(() => {
-    const searchSongs = async () => {
+    const performSearch = async () => {
       if (searchQuery.length >= 2) {
         try {
-          const response = await axios.get(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-          setSearchResults(response.data.results || []);
+          const response = await searchSongs(searchQuery);
+          setSearchResults(response.results || []);
           setShowDropdown(true);
         } catch (error) {
           console.error('Search error:', error);
@@ -62,7 +62,7 @@ export default function SongSearch({ onAnalyze, loading }: SongSearchProps) {
       }
     };
 
-    const timeoutId = setTimeout(searchSongs, 300); // Debounce
+    const timeoutId = setTimeout(performSearch, 300); // Debounce
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
@@ -83,15 +83,10 @@ export default function SongSearch({ onAnalyze, loading }: SongSearchProps) {
       setLyrics(''); // Clear while fetching
       
       try {
-        const lyricsResponse = await axios.get('/api/lyrics', {
-          params: {
-            artist: song.artist,
-            title: song.title
-          }
-        });
+        const lyricsData = await fetchLyrics(song.artist, song.title);
         
-        if (lyricsResponse.data.lyrics) {
-          setLyrics(lyricsResponse.data.lyrics);
+        if (lyricsData.lyrics) {
+          setLyrics(lyricsData.lyrics);
         } else {
           // Show message that lyrics need to be entered manually
           setLyrics('');

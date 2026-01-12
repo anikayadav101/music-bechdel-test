@@ -5,7 +5,7 @@ import SongSearch from '@/components/SongSearch';
 import ResultCard from '@/components/ResultCard';
 import SongList from '@/components/SongList';
 import StatsChart from '@/components/StatsChart';
-import axios from 'axios';
+import { getSongs, getStats, addSong, analyzeSong } from '@/lib/clientStorage';
 
 interface BechdelResult {
   pass: boolean;
@@ -48,40 +48,46 @@ export default function Home() {
     loadStats();
   }, [filter, searchQuery]);
 
-  const loadSongs = async () => {
+  const loadSongs = () => {
     try {
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('q', searchQuery);
-      if (filter !== 'all') params.append('filter', filter);
-      
-      const response = await axios.get(`/api/songs?${params.toString()}`);
-      setSongs(response.data.songs || []);
+      const songs = getSongs({
+        query: searchQuery || undefined,
+        status: filter !== 'all' ? filter : undefined
+      });
+      setSongs(songs);
     } catch (error) {
       console.error('Error loading songs:', error);
     }
   };
 
-  const loadStats = async () => {
+  const loadStats = () => {
     try {
-      const response = await axios.get('/api/stats');
-      setStats(response.data);
+      const statsData = getStats();
+      setStats(statsData);
     } catch (error) {
       console.error('Error loading stats:', error);
     }
   };
 
-  const handleAnalyze = async (data: { title: string; artist: string; lyrics: string; year?: number }) => {
+  const handleAnalyze = (data: { title: string; artist: string; lyrics: string; year?: number }) => {
     setLoading(true);
     try {
-      const response = await axios.post('/api/analyze', data);
-      setCurrentResult(response.data);
+      // Analyze the song
+      const result = analyzeSong(data);
+      setCurrentResult(result);
       
-      // Also save to database
-      await axios.post('/api/songs', data);
+      // Save to database
+      addSong({
+        title: data.title,
+        artist: data.artist,
+        year: data.year,
+        lyrics: data.lyrics,
+        bechdelResult: result
+      });
       
       // Reload songs and stats
-      await loadSongs();
-      await loadStats();
+      loadSongs();
+      loadStats();
     } catch (error) {
       console.error('Error analyzing song:', error);
       alert('Failed to analyze song. Please try again.');
