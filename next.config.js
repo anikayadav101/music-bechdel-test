@@ -1,4 +1,7 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === 'production';
+const basePath = isProd ? '/music-bechdel-test' : '';
+
 const nextConfig = {
   reactStrictMode: true,
   output: 'export',
@@ -6,8 +9,8 @@ const nextConfig = {
     unoptimized: true,
   },
   trailingSlash: true,
-  basePath: process.env.NODE_ENV === 'production' ? '/music-bechdel-test' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/music-bechdel-test' : '',
+  basePath: basePath,
+  assetPrefix: basePath,
 }
 
 module.exports = nextConfig
