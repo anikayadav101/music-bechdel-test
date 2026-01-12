@@ -209,6 +209,7 @@ export function analyzeBechdelTest(song: SongData): BechdelResult {
       topics: {
         romantic: romanticCount,
         self: ambitionCount,
+        ambition: ambitionCount,
         friendship: friendshipCount,
         other: otherCount,
         dominantTopic
